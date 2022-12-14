@@ -26,10 +26,13 @@ class TarefaDB {
   Future _createDB(Database db, int version ) async {
     final idType = 'INTEGER PRIMARY KEY AUTOINCREMENT';
     final textType = 'TEXT NOT NULL';
+    final boolType = 'BOOLEAN NOT NULL';
+
     await db.execute('''
       CREATE TABLE $tableTarefasName (
         ${TarefaFields.id} $idType,
-        ${TarefaFields.name} $textType
+        ${TarefaFields.name} $textType,
+        ${TarefaFields.isDone} $boolType
       )
     ''');
   }
@@ -45,9 +48,9 @@ class TarefaDB {
     // TODO: OUTRO MÉTODO
     // final json = tarefa.toJson();
     // final columns =
-    //     '${TarefaFields.name}';
+    //     '${TarefaFields.name}, ${TarefaFields.isDone}';
     // final values =
-    //     '${json[NoteFields.name]}';
+    //     '${json[TarefaFields.name]}, ${json[TarefaFields.isDone]}';
     // final id = await db
     //     .rawInsert('INSERT INTO tableTarefasname ($columns) VALUES ($values)');
 
@@ -55,6 +58,8 @@ class TarefaDB {
     return tarefa.copy(id: id);
   }
 
+  // TODO: Caso use o throw exception ao invés de return null
+  // Future<Tarefa?> read(int id) async
   Future<Tarefa?> read(int id) async {
     final db = await instance.database;
     final result = await db.query(
@@ -69,6 +74,8 @@ class TarefaDB {
       return Tarefa.fromJson(result.first);
     }
     else {
+      // TODO: Outro método
+      // throw Exception('ID $id not found');
       return null;
     }
   }
