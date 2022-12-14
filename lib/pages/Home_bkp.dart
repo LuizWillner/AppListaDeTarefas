@@ -2,8 +2,6 @@ import 'dart:io';
 import "dart:async";
 import "dart:convert";
 import 'package:flutter/material.dart';
-import 'package:lista_tarefas_completo_app/db/tarefas_database.dart';
-import 'package:lista_tarefas_completo_app/models/tarefa.dart';
 import 'package:path_provider/path_provider.dart';
 
 class Home extends StatefulWidget {
@@ -26,10 +24,6 @@ class _HomeState extends State<Home> {
     return File("${dir.path}/data.json");
   }
 
-  Future refreshTarefas() async {
-    _listaTarefas = await TarefaDB.instance.readAll();
-  }
-
   _saveTarefa() {
     String taskStr = _controllerCreateTarefa.text;
 
@@ -42,20 +36,6 @@ class _HomeState extends State<Home> {
     });
 
     _saveFile();
-
-    _controllerCreateTarefa.text = "";
-  }
-
-  _createTarefaOnDB() async {
-    Tarefa tarefa = Tarefa(
-        name: _controllerCreateTarefa.text,
-        isDone: false
-    );
-    await TarefaDB.instance.create(tarefa);
-
-    setState(() {
-      _listaTarefas.add(tarefa);
-    });
 
     _controllerCreateTarefa.text = "";
   }
@@ -76,11 +56,9 @@ class _HomeState extends State<Home> {
   }
 
   Widget listItemCreate(BuildContext context, int index) {
-    // final item = _listaTarefas[index].name +
-    //     _listaTarefas[index].isDone.toString();
-    // var _lastRemovedTask;
-
-    final tarefa = _listaTarefas[index];
+    final item = _listaTarefas[index]["titulo"] +
+        _listaTarefas[index]["realizada"].toString();
+    var _lastRemovedTask;
 
     return Dismissible(
         key: Key(DateTime.now().microsecondsSinceEpoch.toString()),
@@ -163,14 +141,13 @@ class _HomeState extends State<Home> {
           ]),
         ),
         child: CheckboxListTile(
-          title: Text(tarefa.name),
-          value: tarefa.isDone,
+          title: Text(_listaTarefas[index]["titulo"]),
+          value: _listaTarefas[index]["realizada"],
           onChanged: (newVal) {
             setState(() {
-              tarefa.isDone = newVal;
+              _listaTarefas[index]["realizada"] = newVal;
             });
-            // _saveFile();
-            // update()
+            _saveFile();
           },
         ));
   }
@@ -178,12 +155,18 @@ class _HomeState extends State<Home> {
   @override
   void initState() {
     super.initState();
-    refreshTarefas();
+    _readFile().then((data) {
+      setState(() {
+        print("Data: $data");
+        _listaTarefas = jsonDecode(data);
+        print("Data2: $_listaTarefas");
+      });
+    });
   }
 
   @override
   Widget build(BuildContext context) {
-    print("_listaTarefas = " + _listaTarefas.toString());
+    print("items:" + _listaTarefas.toString());
 
     return Scaffold(
       appBar: AppBar(
@@ -203,7 +186,7 @@ class _HomeState extends State<Home> {
                   content: TextField(
                       controller: _controllerCreateTarefa,
                       decoration:
-                          InputDecoration(labelText: "Digite sua tarefa"),
+                      InputDecoration(labelText: "Digite sua tarefa"),
                       onChanged: (text) {}),
                   actions: [
                     TextButton(
@@ -213,8 +196,7 @@ class _HomeState extends State<Home> {
                         child: Text("Cancelar")),
                     TextButton(
                         onPressed: () {
-                          // _saveTarefa();
-                          _createTarefaOnDB();
+                          _saveTarefa();
                           Navigator.pop(context);
                         },
                         child: Text("Salvar")),
