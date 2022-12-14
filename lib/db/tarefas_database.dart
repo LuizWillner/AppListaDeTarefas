@@ -2,6 +2,7 @@ import 'package:lista_tarefas_completo_app/models/tarefa.dart';
 import 'package:path/path.dart';
 import 'package:sqflite/sqflite.dart';
 
+// PIMBAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAAA
 
 class TarefaDB {
   static final TarefaDB instance = TarefaDB._init();
@@ -44,22 +45,10 @@ class TarefaDB {
 
   Future<Tarefa> create(Tarefa tarefa) async {
     final db = await instance.database;
-
-    // TODO: OUTRO MÉTODO
-    // final json = tarefa.toJson();
-    // final columns =
-    //     '${TarefaFields.name}, ${TarefaFields.isDone}';
-    // final values =
-    //     '${json[TarefaFields.name]}, ${json[TarefaFields.isDone]}';
-    // final id = await db
-    //     .rawInsert('INSERT INTO tableTarefasname ($columns) VALUES ($values)');
-
     final id = await db.insert(tableTarefasName, tarefa.toJson());
     return tarefa.copy(id: id);
   }
 
-  // TODO: Caso use o throw exception ao invés de return null
-  // Future<Tarefa?> read(int id) async
   Future<Tarefa?> read(int id) async {
     final db = await instance.database;
     final result = await db.query(
@@ -74,8 +63,6 @@ class TarefaDB {
       return Tarefa.fromJson(result.first);
     }
     else {
-      // TODO: Outro método
-      // throw Exception('ID $id not found');
       return null;
     }
   }
@@ -83,9 +70,6 @@ class TarefaDB {
   Future<List<Tarefa>> readAll() async {
     final db = await instance.database;
     final desiredOrderBy = '${TarefaFields.id} ASC';
-
-    // TODO: OUTRO MÉTODO
-    // final result = await db.rawQuery('SELECT * FROM $tableTarefasName ORDER BY $desiredOrderBy');
 
     final result = await db.query(
       tableTarefasName,

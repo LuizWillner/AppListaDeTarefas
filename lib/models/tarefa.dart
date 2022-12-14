@@ -40,4 +40,8 @@ class Tarefa {
     name: json[TarefaFields.name] as String,
     isDone: json[TarefaFields.isDone] == 1,
   );
+
+  void printTarefa() {
+    print('Tarefa $id: $name, feita? $isDone');
+  }
 }

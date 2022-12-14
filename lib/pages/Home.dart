@@ -18,32 +18,8 @@ class _HomeState extends State<Home> {
   TextEditingController _controllerCreateTarefa = TextEditingController();
   TextEditingController _controllerEditTarefa = TextEditingController();
 
-  Future<File> _getFile() async {
-    final dir = await getApplicationDocumentsDirectory();
-    print("Path: ${dir.path}");
-    print("dir = ${dir.absolute}");
-
-    return File("${dir.path}/data.json");
-  }
-
   Future refreshTarefas() async {
     _listaTarefas = await TarefaDB.instance.readAll();
-  }
-
-  _saveTarefa() {
-    String taskStr = _controllerCreateTarefa.text;
-
-    Map<String, dynamic> tarefa = Map();
-    tarefa["titulo"] = taskStr;
-    tarefa["realizada"] = false;
-
-    setState(() {
-      _listaTarefas.add(tarefa);
-    });
-
-    _saveFile();
-
-    _controllerCreateTarefa.text = "";
   }
 
   _createTarefaOnDB() async {
@@ -60,26 +36,21 @@ class _HomeState extends State<Home> {
     _controllerCreateTarefa.text = "";
   }
 
-  _saveFile() async {
-    final file = await _getFile();
-    String data = jsonEncode(_listaTarefas);
-    file.writeAsString(data);
+  _updateTarefaOnDB(int index, Tarefa tarefaUpdated) async {
+    await TarefaDB.instance.update(tarefaUpdated);
+    setState(() {
+      _listaTarefas[index] = tarefaUpdated;
+    });
   }
 
-  _readFile() async {
-    try {
-      final file = await _getFile();
-      return file.readAsString();
-    } catch (e) {
-      return null;
-    }
+  _deleteTarefaOnDB(int index, int tarefaID) async {
+    await TarefaDB.instance.delete(tarefaID);
+    setState(() {
+      _listaTarefas.removeAt(index);
+    });
   }
 
   Widget listItemCreate(BuildContext context, int index) {
-    // final item = _listaTarefas[index].name +
-    //     _listaTarefas[index].isDone.toString();
-    // var _lastRemovedTask;
-
     final tarefa = _listaTarefas[index];
 
     return Dismissible(
@@ -100,10 +71,7 @@ class _HomeState extends State<Home> {
                             child: Text("Não")),
                         TextButton(
                             onPressed: () {
-                              setState(() {
-                                _listaTarefas.removeAt(index);
-                              });
-                              _saveFile();
+                              _deleteTarefaOnDB(index, tarefa.id);
                               Navigator.pop(context);
                             },
                             child: Text("Sim")),
@@ -117,7 +85,7 @@ class _HomeState extends State<Home> {
                     return AlertDialog(
                       title: Text("Editar Tarefa"),
                       content: TextField(
-                          controller: _controllerEditTarefa .. text = _listaTarefas[index]["titulo"],
+                          controller: _controllerEditTarefa .. text = tarefa.name,
                           onChanged: (text) {}),
                       actions: [
                         TextButton(
@@ -127,10 +95,8 @@ class _HomeState extends State<Home> {
                             child: Text("Cancelar")),
                         TextButton(
                             onPressed: () {
-                              setState(() {
-                                _listaTarefas[index]["titulo"] = _controllerEditTarefa.text;
-                              });
-                              _saveFile();
+                              Tarefa tarefaUpdated = tarefa.copy(name: _controllerEditTarefa.text);
+                              _updateTarefaOnDB(index, tarefaUpdated);
                               Navigator.pop(context);
                             },
                             child: Text("Salvar")),
@@ -166,11 +132,8 @@ class _HomeState extends State<Home> {
           title: Text(tarefa.name),
           value: tarefa.isDone,
           onChanged: (newVal) {
-            setState(() {
-              tarefa.isDone = newVal;
-            });
-            // _saveFile();
-            // update()
+            Tarefa tarefaUpdated = tarefa.copy(isDone: newVal);
+            _updateTarefaOnDB(index, tarefaUpdated);
           },
         ));
   }
@@ -183,8 +146,6 @@ class _HomeState extends State<Home> {
 
   @override
   Widget build(BuildContext context) {
-    print("_listaTarefas = " + _listaTarefas.toString());
-
     return Scaffold(
       appBar: AppBar(
         title: Text("Lista de Tarefas"),
@@ -213,7 +174,6 @@ class _HomeState extends State<Home> {
                         child: Text("Cancelar")),
                     TextButton(
                         onPressed: () {
-                          // _saveTarefa();
                           _createTarefaOnDB();
                           Navigator.pop(context);
                         },
